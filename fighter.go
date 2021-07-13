@@ -6,11 +6,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gocolly/colly"
 )
 
 type FighterID string
+
+var (
+	baseURL = "https://www.sherdog.com/"
+)
 
 // TODO
 type Fighter struct {
@@ -59,7 +62,7 @@ func FindFighterByID(fighterID FighterID) *Fighter {
 }
 
 func FindFighterByName(name string) []*Fighter {
-	return nil
+	return searchFighter(name)
 }
 
 func fetchFighter(fighterID FighterID) *Fighter {
@@ -124,7 +127,6 @@ func fetchFighter(fighterID FighterID) *Fighter {
 
 	// TODO Record Wins
 	c.OnHTML("div.bio_graph", func(h *colly.HTMLElement) {
-		spew.Dump(h.ChildText(".counter"))
 		h.ForEach(".card", func(i int, h *colly.HTMLElement) {
 			if i == 0 {
 				// spew.Dump("Wins", h.Text)
@@ -187,7 +189,6 @@ func fetchFighter(fighterID FighterID) *Fighter {
 
 				fights = append(fights, fight)
 			}
-
 		})
 
 		f.Fights = fights
@@ -202,4 +203,8 @@ func fetchFighter(fighterID FighterID) *Fighter {
 	}
 
 	return f
+}
+
+func searchFighter(name string) []*Fighter {
+	return nil
 }
