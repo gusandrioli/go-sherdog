@@ -1,4 +1,4 @@
-# Sherdog Go Wrapper
+# **go-sherdog**
 Wrapper of the most famous MMA website - [Sherdog](https://sherdog.com) - written in Go.
 ## Installation
 ```sh
