@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -12,27 +13,29 @@ import (
 type FighterID string
 
 var (
-	baseURL = "https://www.sherdog.com/"
+	baseURL = "https://www.sherdog.com"
 )
 
-// TODO
+// Fighter represents a fighter on Sherdog. It includes personal information
+// fight history, record, etc.
 type Fighter struct {
-	Age         uint
-	Assocaition string
-	Birthday    time.Time
-	Fights      []Fight
-	Height      string
-	ImageURL    string
-	Locality    string
-	Name        string
-	Nationality string
-	Nickname    string
-	Record      Record
-	Weight      string
-	WeightClass string
+	Age          uint
+	Assocaition  string
+	Birthday     time.Time
+	FightHisotry []Fight
+	Height       string
+	ImageURL     string
+	ID           string
+	Locality     string
+	Name         string
+	Nationality  string
+	Nickname     string
+	Record       Record
+	Weight       string
+	WeightClass  string
 }
 
-// TODO
+// Record represents a record on Sherdog. Each Fighter has one Record.
 type Record struct {
 	LossesDecisions   uint
 	LossesKnockouts   uint
@@ -45,119 +48,51 @@ type Record struct {
 	WinsTotal         uint
 }
 
-// TODO
+// Fight represents a fight on Sherdog. Each Fighter has one or more fights
+// on his FightHistory.
 type Fight struct {
 	Date     string
 	Event    string
 	Method   string
-	Opponent string // TODO: could be another Fighter struct but could cause performance issues.
+	Opponent string
 	Referee  string
 	Result   string
 	Round    uint
 	Time     string
 }
 
-func FindFighterByID(fighterID FighterID) *Fighter {
+// Find a fighter by their unique FighterID (e.g. Robert-Whittaker-45132). This ID
+// can be fetched from FindFighterByName response.
+func FindFighterByID(fighterID FighterID) (*Fighter, error) {
 	return fetchFighter(fighterID)
 }
 
-func FindFighterByName(name string) []*Fighter {
+// Find fighters by their name. Returns a slice of fighters.
+func FindFighterByName(name string) ([]*Fighter, error) {
 	return searchFighter(name)
 }
 
-func fetchFighter(fighterID FighterID) *Fighter {
+func fetchFighter(fighterID FighterID) (*Fighter, error) {
 	f := &Fighter{}
 
 	c := colly.NewCollector()
 
-	// Name and Nickname
-	c.OnHTML("h1", func(e *colly.HTMLElement) {
-		e.ForEach("span", func(i int, h *colly.HTMLElement) {
-			switch i {
-			case 0:
-				f.Name = h.Text
-			case 1:
-				f.Nickname = strings.Replace(h.Text, "\\", "", -1) // TODO sanitize
-			}
-		})
-	})
-
 	// Age/Birthday
 	c.OnHTML("span.birthday", func(h *colly.HTMLElement) {
-		h.ForEach("", func(i int, h *colly.HTMLElement) {
-			switch i {
-			case 0:
-				birthday, _ := time.Parse("2006-01-02", h.Text)
-				f.Birthday = birthday
-			case 1:
+		birthday, _ := time.Parse("2006-01-02", h.ChildText("span[itemprop=birthDate]"))
+		f.Birthday = birthday
 
-			}
-		})
+		ageWithLabel := strings.Split(h.ChildText("strong"), " ")
+		ageInt, _ := strconv.Atoi(ageWithLabel[1])
+		f.Age = uint(ageInt)
 	})
 
-	// Nationality
-	c.OnHTML("strong[itemprop=nationality]", func(h *colly.HTMLElement) {
-		f.Nationality = h.Text
-	})
-
-	// Locality
-	c.OnHTML("span.locality", func(h *colly.HTMLElement) {
-		f.Locality = h.Text
-	})
-
-	// Height
-	c.OnHTML("strong[itemprop=height]", func(h *colly.HTMLElement) {
-		f.Height = strings.Replace(h.Text, "\\", "", -1)
-	})
-
-	// Weight
-	c.OnHTML("strong[itemprop=weight]", func(h *colly.HTMLElement) {
-		f.Weight = h.Text
-	})
-
-	// WightClass
-	c.OnHTML("strong.title", func(h *colly.HTMLElement) {
-		f.WeightClass = h.Text
-	})
-
-	// Gym
+	// Assocaition
 	c.OnHTML("a.association", func(h *colly.HTMLElement) {
 		f.Assocaition = h.Text
 	})
 
-	// TODO Record Wins
-	c.OnHTML("div.bio_graph", func(h *colly.HTMLElement) {
-		h.ForEach(".card", func(i int, h *colly.HTMLElement) {
-			if i == 0 {
-				// spew.Dump("Wins", h.Text)
-			}
-		})
-	})
-
-	// Record Losses
-	c.OnHTML("div.loser", func(h *colly.HTMLElement) {
-		losses, _ := strconv.Atoi(h.ChildText(".counter"))
-		f.Record.LossesTotal = uint(losses)
-
-		// Losses Stats
-		h.ForEach(".graph_tag", func(i int, j *colly.HTMLElement) {
-			switch i {
-			case 0:
-				dec, _ := strconv.Atoi(string([]byte(j.Text)[0]))
-				f.Record.LossesKnockouts = uint(dec)
-			case 1:
-				dec, _ := strconv.Atoi(string([]byte(j.Text)[0]))
-				f.Record.LossesSubmissions = uint(dec)
-			case 2:
-				dec, _ := strconv.Atoi(string([]byte(j.Text)[0]))
-				f.Record.LossesDecisions = uint(dec)
-			default:
-				break
-			}
-		})
-	})
-
-	// Fights
+	// Fight History
 	var fights []Fight
 	c.OnHTML("tbody", func(h *colly.HTMLElement) {
 		h.ForEach("tr", func(row int, j *colly.HTMLElement) {
@@ -169,7 +104,9 @@ func fetchFighter(fighterID FighterID) *Fighter {
 					case 0:
 						fight.Result = k.Text
 					case 1:
-						fight.Opponent = k.Text
+						opponentURLSplitted := strings.Split(k.ChildAttr("a", "href"), "/")
+						opponentID := opponentURLSplitted[len(opponentURLSplitted)-1]
+						fight.Opponent = k.Text + fmt.Sprintf(" (%s)", opponentID)
 					case 2:
 						fight.Event = k.ChildText("span[itemprop=award]")
 						fight.Date = k.ChildText("span.sub_line")
@@ -191,20 +128,158 @@ func fetchFighter(fighterID FighterID) *Fighter {
 			}
 		})
 
-		f.Fights = fights
+		f.FightHisotry = fights
+	})
+
+	// Height
+	c.OnHTML("strong[itemprop=height]", func(h *colly.HTMLElement) {
+		f.Height = strings.Replace(h.Text, "\\", "", -1)
+	})
+
+	// ImageURL
+	c.OnHTML("img.profile_image", func(h *colly.HTMLElement) {
+		f.ImageURL = baseURL + h.Attr("src")
+	})
+
+	// ID
+	f.ID = string(fighterID)
+
+	// Locality
+	c.OnHTML("span.locality", func(h *colly.HTMLElement) {
+		f.Locality = h.Text
+	})
+
+	// Name and Nickname
+	c.OnHTML("h1", func(e *colly.HTMLElement) {
+		e.ForEach("span", func(i int, h *colly.HTMLElement) {
+			switch i {
+			case 0:
+				f.Name = h.Text
+			case 1:
+				f.Nickname = strings.Replace(h.Text, "\\", "", -1) // TODO sanitize
+			}
+		})
+	})
+
+	// Nationality
+	c.OnHTML("strong[itemprop=nationality]", func(h *colly.HTMLElement) {
+		f.Nationality = h.Text
+	})
+
+	// Record Wins/Losses/NoContests
+	c.OnHTML("div.left_side", func(h *colly.HTMLElement) {
+		h.ForEach("div.bio_graph", func(i int, j *colly.HTMLElement) {
+			if i == 0 {
+				wins, _ := strconv.Atoi(j.ChildText(".counter"))
+				f.Record.WinsTotal = uint(wins)
+
+				// Wins Stats
+				j.ForEach("span.graph_tag", func(methodCounter int, k *colly.HTMLElement) {
+					switch methodCounter {
+					case 0:
+						ko, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.WinsKnockouts = uint(ko)
+					case 1:
+						sub, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.WinsSubmissions = uint(sub)
+					case 2:
+						dec, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.WinsDecisions = uint(dec)
+					default:
+						break
+					}
+				})
+			} else if i == 1 {
+				losses, _ := strconv.Atoi(j.ChildText(".counter"))
+				f.Record.LossesTotal = uint(losses)
+
+				// Losses Stats
+				j.ForEach("span.graph_tag", func(methodCounter int, k *colly.HTMLElement) {
+					switch methodCounter {
+					case 0:
+						ko, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.LossesKnockouts = uint(ko)
+					case 1:
+						sub, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.LossesSubmissions = uint(sub)
+					case 2:
+						dec, _ := strconv.Atoi(string([]byte(k.Text)[0]))
+						f.Record.LossesDecisions = uint(dec)
+					default:
+						break
+					}
+				})
+			}
+		})
+	})
+
+	c.OnHTML("div.count_history", func(h *colly.HTMLElement) {
+		NC, _ := strconv.Atoi(h.ChildText("div.right_side div.bio_graph span.card span.counter"))
+		f.Record.NoContests = uint(NC)
+	})
+
+	// Weight
+	c.OnHTML("strong[itemprop=weight]", func(h *colly.HTMLElement) {
+		f.Weight = h.Text
+	})
+
+	// WightClass
+	c.OnHTML("strong.title", func(h *colly.HTMLElement) {
+		f.WeightClass = h.Text
 	})
 
 	c.OnError(func(r *colly.Response, e error) {
-		log.Println("error:", e, r.Request.URL, string(r.Body))
+		log.Printf("Error on %v: %v", r.Request.URL, e)
 	})
 
 	if err := c.Visit("https://www.sherdog.com/fighter/" + string(fighterID)); err != nil {
+		if err.Error() == "Not Found" {
+			return nil, ErrFighterNotFound
+		}
+
+		return nil, err
+	}
+
+	return f, nil
+}
+
+func searchFighter(name string) ([]*Fighter, error) {
+	c := colly.NewCollector()
+
+	var fighterIDs []string
+
+	// Search through result table
+	c.OnHTML("table.fightfinder_result", func(h *colly.HTMLElement) {
+		h.ForEach("tbody", func(_ int, i *colly.HTMLElement) {
+			i.ForEach("tr", func(row int, j *colly.HTMLElement) {
+				if row != 0 && !strings.Contains(j.ChildAttr("a", "href"), "/events") {
+					fighterURLSplitted := strings.Split(j.ChildAttr("a", "href"), "/")
+					fighterIDs = append(fighterIDs, fighterURLSplitted[len(fighterURLSplitted)-1])
+				}
+			})
+		})
+	})
+
+	nameForURL := strings.Replace(name, " ", "+", -1)
+
+	if err := c.Visit("https://www.sherdog.com/stats/fightfinder?SearchTxt=" + nameForURL); err != nil {
 		log.Fatal(err)
 	}
 
-	return f
-}
+	if len(fighterIDs) == 0 {
+		return nil, ErrFighterNotFound
+	}
 
-func searchFighter(name string) []*Fighter {
-	return nil
+	var fighters []*Fighter
+
+	for _, id := range fighterIDs {
+		fighter, err := fetchFighter(FighterID(id))
+		if err != nil {
+			return nil, err
+		}
+
+		fighters = append(fighters, fighter)
+	}
+
+	return fighters, nil
 }
