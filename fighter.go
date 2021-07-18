@@ -10,11 +10,8 @@ import (
 	"github.com/gocolly/colly"
 )
 
+// FighterID represents each Fighter's unique identifier (e.g. Robert-Whittaker-45132)
 type FighterID string
-
-var (
-	baseURL = "https://www.sherdog.com"
-)
 
 // Fighter represents a fighter on Sherdog. It includes personal information
 // fight history, record, etc.
@@ -25,7 +22,7 @@ type Fighter struct {
 	ProFightHisotry []Fight
 	Height          string
 	ImageURL        string
-	ID              string
+	ID              FighterID
 	Locality        string
 	Name            string
 	Nationality     string
@@ -149,7 +146,7 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 	})
 
 	// ID
-	f.ID = string(fighterID)
+	f.ID = fighterID
 
 	// Locality
 	c.OnHTML("span.locality", func(h *colly.HTMLElement) {
@@ -239,7 +236,7 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 		log.Printf("Error on %v: %v", r.Request.URL, e)
 	})
 
-	if err := c.Visit("https://www.sherdog.com/fighter/" + string(fighterID)); err != nil {
+	if err := c.Visit(URLFighter + string(fighterID)); err != nil {
 		if err.Error() == "Not Found" {
 			return nil, ErrFighterNotFound
 		}
@@ -269,7 +266,7 @@ func searchFighter(name string) ([]*Fighter, error) {
 
 	nameForURL := strings.Replace(name, " ", "+", -1)
 
-	if err := c.Visit("https://www.sherdog.com/stats/fightfinder?SearchTxt=" + nameForURL); err != nil {
+	if err := c.Visit(URLFindFighter + "?SearchTxt=" + nameForURL); err != nil {
 		log.Fatal(err)
 	}
 

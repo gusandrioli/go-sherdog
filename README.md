@@ -31,9 +31,11 @@ func main() {
 // Present
 func FindFighterByID(fighterID FighterID) (*Fighter, error)
 func FindFighterByName(name string) ([]*Fighter, error)
+func FindOrganizationByID(organizationID OrganizationID) (*Organization, error)
+func FindUpcomingEventsByOrganization(organizationID OrganizationID) ([]*Event, error)
 
 // Upcoming... (subject to change)
-func GetOrganizationEvents(organization string) ([]*Event, error)
+func FindAllUpcomingEvents() []*Event
 ```
 
 ## Fighter Structure Example
