@@ -19,20 +19,20 @@ var (
 // Fighter represents a fighter on Sherdog. It includes personal information
 // fight history, record, etc.
 type Fighter struct {
-	Age          uint
-	Assocaition  string
-	Birthday     time.Time
-	FightHisotry []Fight
-	Height       string
-	ImageURL     string
-	ID           string
-	Locality     string
-	Name         string
-	Nationality  string
-	Nickname     string
-	Record       Record
-	Weight       string
-	WeightClass  string
+	Age             uint
+	Assocaition     string
+	Birthday        time.Time
+	ProFightHisotry []Fight
+	Height          string
+	ImageURL        string
+	ID              string
+	Locality        string
+	Name            string
+	Nationality     string
+	Nickname        string
+	Record          Record
+	Weight          string
+	WeightClass     string
 }
 
 // Record represents a record on Sherdog. Each Fighter has one Record.
@@ -94,42 +94,85 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 
 	// Fight History
 	var fights []Fight
-	c.OnHTML("tbody", func(h *colly.HTMLElement) {
-		h.ForEach("tr", func(row int, j *colly.HTMLElement) {
-			if row != 0 {
-				fight := Fight{}
+	c.OnHTML("div.fight_history", func(g *colly.HTMLElement) {
+		if g.ChildText("div.module_header") == "Fight History - Pro" {
+			g.ForEach("table", func(_ int, table *colly.HTMLElement) {
+				table.ForEach("tbody", func(_ int, tbody *colly.HTMLElement) {
+					tbody.ForEach("tr", func(row int, tr *colly.HTMLElement) {
+						if row != 0 {
+							fight := Fight{}
 
-				j.ForEach("td", func(cell int, k *colly.HTMLElement) {
-					switch cell {
-					case 0:
-						fight.Result = k.Text
-					case 1:
-						opponentURLSplitted := strings.Split(k.ChildAttr("a", "href"), "/")
-						opponentID := opponentURLSplitted[len(opponentURLSplitted)-1]
-						fight.Opponent = k.Text + fmt.Sprintf(" (%s)", opponentID)
-					case 2:
-						fight.Event = k.ChildText("span[itemprop=award]")
-						fight.Date = k.ChildText("span.sub_line")
-					case 3:
-						ref := k.ChildText("span.sub_line")
-						methodWithRef := []byte(k.Text)
-						fight.Method = string(methodWithRef[:(len(methodWithRef) - len(ref))]) // Hacky way to fetch method
-						fight.Referee = ref
-					case 4:
-						r, _ := strconv.Atoi(k.Text)
-						fight.Round = uint(r)
-					case 5:
-						fight.Time = k.Text
-					}
+							tr.ForEach("td", func(cell int, k *colly.HTMLElement) {
+								switch cell {
+								case 0:
+									fight.Result = k.Text
+								case 1:
+									opponentURLSplitted := strings.Split(k.ChildAttr("a", "href"), "/")
+									opponentID := opponentURLSplitted[len(opponentURLSplitted)-1]
+									fight.Opponent = k.Text + fmt.Sprintf(" (%s)", opponentID)
+								case 2:
+									fight.Event = k.ChildText("span[itemprop=award]")
+									fight.Date = k.ChildText("span.sub_line")
+								case 3:
+									ref := k.ChildText("span.sub_line")
+									methodWithRef := []byte(k.Text)
+									fight.Method = string(methodWithRef[:(len(methodWithRef) - len(ref))]) // Hacky way to fetch method
+									fight.Referee = ref
+								case 4:
+									r, _ := strconv.Atoi(k.Text)
+									fight.Round = uint(r)
+								case 5:
+									fight.Time = k.Text
+								}
 
+							})
+
+							fights = append(fights, fight)
+						}
+					})
+
+					f.ProFightHisotry = fights
 				})
 
-				fights = append(fights, fight)
-			}
-		})
-
-		f.FightHisotry = fights
+			})
+		}
 	})
+	// c.OnHTML("tbody", func(h *colly.HTMLElement) {
+	// 	h.ForEach("tr", func(row int, j *colly.HTMLElement) {
+	// 		if row != 0 {
+	// 			fight := Fight{}
+
+	// 			j.ForEach("td", func(cell int, k *colly.HTMLElement) {
+	// 				switch cell {
+	// 				case 0:
+	// 					fight.Result = k.Text
+	// 				case 1:
+	// 					opponentURLSplitted := strings.Split(k.ChildAttr("a", "href"), "/")
+	// 					opponentID := opponentURLSplitted[len(opponentURLSplitted)-1]
+	// 					fight.Opponent = k.Text + fmt.Sprintf(" (%s)", opponentID)
+	// 				case 2:
+	// 					fight.Event = k.ChildText("span[itemprop=award]")
+	// 					fight.Date = k.ChildText("span.sub_line")
+	// 				case 3:
+	// 					ref := k.ChildText("span.sub_line")
+	// 					methodWithRef := []byte(k.Text)
+	// 					fight.Method = string(methodWithRef[:(len(methodWithRef) - len(ref))]) // Hacky way to fetch method
+	// 					fight.Referee = ref
+	// 				case 4:
+	// 					r, _ := strconv.Atoi(k.Text)
+	// 					fight.Round = uint(r)
+	// 				case 5:
+	// 					fight.Time = k.Text
+	// 				}
+
+	// 			})
+
+	// 			fights = append(fights, fight)
+	// 		}
+	// 	})
+
+	// 	f.ProFightHisotry = fights
+	// })
 
 	// Height
 	c.OnHTML("strong[itemprop=height]", func(h *colly.HTMLElement) {

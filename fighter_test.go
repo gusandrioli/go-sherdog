@@ -22,7 +22,7 @@ func Test_FindFighterByID(t *testing.T) {
 				Age:         30,
 				Assocaition: "PMA Super Martial Arts",
 				Birthday:    time.Date(1990, time.December, 20, 0, 0, 0, 0, time.UTC),
-				FightHisotry: []Fight{
+				ProFightHisotry: []Fight{
 					{
 						Date:     "Apr / 17 / 2021",
 						Event:    "UFC on ESPN 22 - Whittaker vs. Gastelum",

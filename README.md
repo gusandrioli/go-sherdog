@@ -22,7 +22,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println(darrenTill)
+	fmt.Println(darrenTill.Nickname)
 }
 ```
 
@@ -42,7 +42,7 @@ func GetOrganizationEvents(organization string) ([]*Event, error)
   Age: "28",
   Association: "Astra Fight TeamTeam Kaobon",
   Birthday: "1992-12-24",
-  FightHistory: []*Fight{
+  ProFightHistory: []*Fight{
     {
       Date: "2020-07-25",
       Event: "UFC on ESPN 14 - Whittaker vs. Till",
