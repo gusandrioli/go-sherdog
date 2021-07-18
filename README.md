@@ -10,17 +10,19 @@ go get -u github.com/gusandrioli/go-sherdog
 package main
 
 import (
-    "fmt"
-    sherdog "github.com/gusandrioli/go-sherdog"
+	"fmt"
+	"log"
+
+	sherdog "github.com/gusandrioli/go-sherdog"
 )
 
 func main() {
-    darrenTill, err := sherdog.FindFighterByID("Darren-Till-73436")
-    if err != nil {
-      log.Errorf(err)
-    }
+	darrenTill, err := sherdog.FindFighterByID("Darren-Till-73436")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-    fmt.Pritnln(darrenTill)
+	fmt.Println(darrenTill)
 }
 ```
 
