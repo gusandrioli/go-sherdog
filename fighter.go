@@ -137,42 +137,6 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 			})
 		}
 	})
-	// c.OnHTML("tbody", func(h *colly.HTMLElement) {
-	// 	h.ForEach("tr", func(row int, j *colly.HTMLElement) {
-	// 		if row != 0 {
-	// 			fight := Fight{}
-
-	// 			j.ForEach("td", func(cell int, k *colly.HTMLElement) {
-	// 				switch cell {
-	// 				case 0:
-	// 					fight.Result = k.Text
-	// 				case 1:
-	// 					opponentURLSplitted := strings.Split(k.ChildAttr("a", "href"), "/")
-	// 					opponentID := opponentURLSplitted[len(opponentURLSplitted)-1]
-	// 					fight.Opponent = k.Text + fmt.Sprintf(" (%s)", opponentID)
-	// 				case 2:
-	// 					fight.Event = k.ChildText("span[itemprop=award]")
-	// 					fight.Date = k.ChildText("span.sub_line")
-	// 				case 3:
-	// 					ref := k.ChildText("span.sub_line")
-	// 					methodWithRef := []byte(k.Text)
-	// 					fight.Method = string(methodWithRef[:(len(methodWithRef) - len(ref))]) // Hacky way to fetch method
-	// 					fight.Referee = ref
-	// 				case 4:
-	// 					r, _ := strconv.Atoi(k.Text)
-	// 					fight.Round = uint(r)
-	// 				case 5:
-	// 					fight.Time = k.Text
-	// 				}
-
-	// 			})
-
-	// 			fights = append(fights, fight)
-	// 		}
-	// 	})
-
-	// 	f.ProFightHisotry = fights
-	// })
 
 	// Height
 	c.OnHTML("strong[itemprop=height]", func(h *colly.HTMLElement) {
