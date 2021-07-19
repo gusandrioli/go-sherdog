@@ -18,6 +18,11 @@ func FindAllUpcomingEvents() []*Event {
 	return nil
 }
 
+// TODO
+func FindEventByName(name string) []*Event {
+	return nil
+}
+
 // Fetch all upcoming events of a certain organization based on their unique OrganizationID
 // (e.g. Bellator-MMA-1960). Returns a slice of Events.
 func FindUpcomingEventsByOrganization(organizationID OrganizationID) ([]*Event, error) {

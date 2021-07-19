@@ -15,8 +15,11 @@ const (
 	OneID      OrganizationID = "One-Championship-3877"
 )
 
+// OrganizationID represents each Organization's unique identifier (e.g. Bellator-MMA-1960).
 type OrganizationID string
 
+// Organization represents an Organization/Company on Sherdog.
+// E.g. UFC, Bellator, PFL. Each event belongs to an Organization.
 type Organization struct {
 	ID             OrganizationID
 	Name           string
@@ -28,6 +31,12 @@ type Organization struct {
 // Returns an Organization
 func FindOrganizationByID(organizationID OrganizationID) (*Organization, error) {
 	return fetchOrganization(organizationID)
+}
+
+// Find an Organization by their Name. Returns an slice of Organizations
+// and an error.
+func FindOrganizationByName(name string) ([]*Organization, error) {
+	return nil, nil
 }
 
 func fetchOrganization(organizationID OrganizationID) (*Organization, error) {
