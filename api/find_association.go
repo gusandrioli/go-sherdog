@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type FindAssocaitionResponse struct {
+type FindAssociationResponse struct {
 	Error      error         `json:"error"`
 	TotalFound int           `json:"total_found"`
 	Limit      int           `json:"limit"`
@@ -21,7 +21,7 @@ type Association struct {
 	Name []string `json:"name"`
 }
 
-func FindAssociationByName(name string) (*FindAssocaitionResponse, error) {
+func FindAssociationByName(name string) (*FindAssociationResponse, error) {
 	nameForURL := strings.Replace(name, " ", "+", -1)
 
 	res, err := http.Get(SearchAssociationsURL + "?q=" + nameForURL)
@@ -30,7 +30,7 @@ func FindAssociationByName(name string) (*FindAssocaitionResponse, error) {
 	}
 	defer res.Body.Close()
 
-	associationResp := &FindAssocaitionResponse{}
+	associationResp := &FindAssociationResponse{}
 
 	json.NewDecoder(res.Body).Decode(associationResp)
 

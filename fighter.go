@@ -74,6 +74,11 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 
 	c := colly.NewCollector()
 
+	c.OnError(func(r *colly.Response, e error) {
+		log.Printf("Error on %v: %v", r.Request.URL, e)
+		return
+	})
+
 	// Age/Birthday
 	c.OnHTML("span.birthday", func(h *colly.HTMLElement) {
 		birthday, _ := time.Parse("2006-01-02", h.ChildText("span[itemprop=birthDate]"))
@@ -232,10 +237,6 @@ func fetchFighter(fighterID FighterID) (*Fighter, error) {
 		f.WeightClass = h.Text
 	})
 
-	c.OnError(func(r *colly.Response, e error) {
-		log.Printf("Error on %v: %v", r.Request.URL, e)
-	})
-
 	if err := c.Visit(URLFighter + string(fighterID)); err != nil {
 		if err.Error() == "Not Found" {
 			return nil, ErrFighterNotFound
@@ -267,7 +268,7 @@ func searchFighter(name string) ([]*Fighter, error) {
 	nameForURL := strings.Replace(name, " ", "+", -1)
 
 	if err := c.Visit(URLFindFighter + "?SearchTxt=" + nameForURL); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
 	if len(fighterIDs) == 0 {

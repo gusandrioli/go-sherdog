@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/gocolly/colly"
+	"github.com/gusandrioli/go-sherdog/api"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -36,7 +38,30 @@ func FindOrganizationByID(organizationID OrganizationID) (*Organization, error) 
 // Find an Organization by their Name. Returns an slice of Organizations
 // and an error.
 func FindOrganizationByName(name string) ([]*Organization, error) {
-	return nil, nil
+	res, err := api.FindOrganizationByName(name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "api.FindOrganizationByName")
+	}
+
+	if res.TotalFound == 0 {
+		return nil, ErrOrganizationNotFound
+	}
+
+	var organizations []*Organization
+	for _, organization := range res.Collection {
+		urlSplitted := strings.Split(organization.URL, "/")
+
+		id := urlSplitted[len(urlSplitted)-1]
+
+		org, err := FindOrganizationByID(OrganizationID(id))
+		if err != nil {
+			return nil, errors.Wrapf(err, "FindOrganizationByID(%v)", id)
+		}
+
+		organizations = append(organizations, org)
+	}
+
+	return organizations, nil
 }
 
 func fetchOrganization(organizationID OrganizationID) (*Organization, error) {

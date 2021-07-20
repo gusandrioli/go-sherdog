@@ -6,26 +6,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_FindAssociationByName(t *testing.T) {
+func Test_FindOrganizationByName(t *testing.T) {
 	tests := []struct {
 		name            string
 		associationName string
 		wantErr         error
-		wantResponse    *FindAssociationResponse
+		wantResponse    *FindOrganizationResponse
 	}{
 		{
 			"successChuteBoxeMonstro",
-			"Chute Boxe Monstro",
+			"Ultimate Fighting Championship (UFC)",
 			nil,
-			&FindAssociationResponse{
+			&FindOrganizationResponse{
 				Error:      nil,
 				TotalFound: 1,
 				Limit:      8,
 				Time:       "0.000",
-				Collection: []Association{
+				Collection: []Organization{
 					{
-						ID:   "178571",
-						Name: []string{"Chute Boxe Monstro"},
+						ID:   "2",
+						Name: "Ultimate Fighting Championship (UFC)",
+						URL:  "/organizations/Ultimate-Fighting-Championship-UFC-2",
 					},
 				},
 			},
@@ -34,12 +35,12 @@ func Test_FindAssociationByName(t *testing.T) {
 			"successNoResult",
 			"asdf123-non-existent-association",
 			nil,
-			&FindAssociationResponse{
+			&FindOrganizationResponse{
 				Error:      nil,
 				TotalFound: 0,
 				Limit:      8,
 				Time:       "0.000",
-				Collection: []Association{},
+				Collection: []Organization{},
 			},
 		},
 	}
@@ -48,7 +49,7 @@ func Test_FindAssociationByName(t *testing.T) {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := FindAssociationByName(tt.associationName)
+			got, err := FindOrganizationByName(tt.associationName)
 			assert.ErrorIs(t, tt.wantErr, err)
 
 			if tt.wantErr == nil {

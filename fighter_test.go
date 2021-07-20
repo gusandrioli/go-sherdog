@@ -335,7 +335,9 @@ func Test_FindFighterByID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := FindFighterByID(tt.fighterID)
 			assert.ErrorIs(t, err, tt.wantErr)
 
@@ -377,7 +379,9 @@ func Test_FindFighterByName(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got, err := FindFighterByName(tt.fighterName)
 			assert.ErrorIs(t, err, tt.wantErr)
 
